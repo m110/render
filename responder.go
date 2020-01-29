@@ -181,7 +181,7 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 				if f, ok := w.(http.Flusher); ok {
 					f.Flush()
 				}
-				return
+				continue
 			}
 
 			// Build each channel item.

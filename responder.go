@@ -139,9 +139,9 @@ func NoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
-type EventStreamComment string
-
-var EventStreamKeepAlive = EventStreamComment("keepalive")
+type EventStreamComment interface {
+	Comment() string
+}
 
 func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 	if reflect.TypeOf(v).Kind() != reflect.Chan {
@@ -177,10 +177,11 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 			v := recv.Interface()
 
 			if comment, ok := v.(EventStreamComment); ok {
-				w.Write([]byte(fmt.Sprintf(":%s\n\n", comment)))
+				w.Write([]byte(fmt.Sprintf(":%s\n\n", comment.Comment())))
 				if f, ok := w.(http.Flusher); ok {
 					f.Flush()
 				}
+				return
 			}
 
 			// Build each channel item.

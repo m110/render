@@ -139,8 +139,9 @@ func NoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
-type EventStreamComment interface {
-	Comment() string
+type StreamEvent interface {
+	Event() string
+	Data() interface{}
 }
 
 func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
@@ -176,12 +177,10 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 			}
 			v := recv.Interface()
 
-			if comment, ok := v.(EventStreamComment); ok {
-				w.Write([]byte(fmt.Sprintf(":%s\n\n", comment.Comment())))
-				if f, ok := w.(http.Flusher); ok {
-					f.Flush()
-				}
-				continue
+			eventName := "data"
+			if event, ok := v.(StreamEvent); ok {
+				eventName = event.Event()
+				v = event.Data()
 			}
 
 			// Build each channel item.
@@ -202,7 +201,7 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 				}
 				continue
 			}
-			w.Write([]byte(fmt.Sprintf("event: data\ndata: %s\n\n", bytes)))
+			w.Write([]byte(fmt.Sprintf("event: %s\ndata: %s\n\n", eventName, bytes)))
 			if f, ok := w.(http.Flusher); ok {
 				f.Flush()
 			}
